@@ -121,7 +121,7 @@ button.act[hidden]{display:none}
 
 <div class="hero">
   <div class="in">
-    <div class="brand"><img src="inspire-logo.png" alt="Inspire International Academy logo" width="245" height="104"><span>Hossam Elmoghazy<small>Math Teacher · Inspire International Academy</small></span></div>
+    <div class="brand"><img src="inspire-logo.png" alt="Inspire International Academy logo" width="245" height="104"><span>Mrs. Amira<small>Math Teacher · Inspire International Academy</small></span></div>
     <h1>Ratio Treasure Quest</h1>
     <p>A fog hides the Red Sea treasure bay. Solve 20 ratio puzzles with Captain Noura. Every level you clear lifts the fog from one piece of the picture and gives you a find for your treasure log.</p>
   </div>
@@ -368,7 +368,7 @@ function clearLevel(){
   var w='<div class="win"><div class="gold">'+starStr(stars)+'</div><div class="big">'+(last?'The fog lifts. Treasure found!':'Level cleared!')+'</div>'
    +'<div class="found">Fog lifted from piece '+(S.cur+1)+'. You found: '+L.item+'</div>'
    +'<div class="tally"><span class="pill">Hearts +'+heartBonus+'</span><span class="pill">Speed +'+timeBonus+'</span><span class="pill">Time '+fmt(t)+'</span></div>';
-  if(last)w+='<p>The whole bay is clear and the pearl chest is yours. Final score: <b>'+S.score+'</b> coins and '+total+' of '+N*3+' stars.</p><p class="rule">Well done, '+esc(ME)+'! Inspire International Academy · Hossam Elmoghazy</p><button class="act" id="again">Sail again</button></div>';
+  if(last)w+='<p>The whole bay is clear and the pearl chest is yours. Final score: <b>'+S.score+'</b> coins and '+total+' of '+N*3+' stars.</p><p class="rule">Well done, '+esc(ME)+'! Inspire International Academy · Mrs. Amira</p><button class="act" id="again">Sail again</button></div>';
   else w+='<p>Next level: '+LEVELS[S.cur+1].name+'.</p><button class="act" id="next">Sail on</button></div>';
   $('win').innerHTML=w;
   $('check').hidden=true;$('hintb').hidden=true;$('msg').textContent='';
