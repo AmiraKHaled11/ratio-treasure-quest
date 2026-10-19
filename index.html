@@ -1,0 +1,460 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Ratio Treasure Quest</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap">
+<style>
+/* Layout: hero, game HUD, a fogged adventure picture that clears tile by tile (20 tiles = 20 levels), sea-lane with ship, 20 level buttons, one quest card, treasure log. Teal is the accent; gold marks stars, coins and finds; red marks lost hearts. */
+:root{
+  --bg:#e8f4f3; --card:#ffffff; --fg:#0f2f3a; --muted:#4d6b73; --line:#c3dcdb;
+  --accent:#0b7a85; --accent-soft:#d3eeee; --accent-fg:#ffffff; --gold:#c98a00;
+  --ok:#1b8a4b; --ok-soft:#d8f2e2; --bad:#c43d3d; --bad-soft:#fbe0e0; --hero:#0b3c4d; --hero-fg:#eafcfb;
+  --sea:#9fd6dc; --sea2:#7cc3cc; --fog:#0b3c4d; --fog2:#14566b;
+  --display:'Baloo 2','Trebuchet MS',sans-serif; --body:'Nunito','Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1a21; --card:#14262f; --fg:#e8f6f6; --muted:#97b4ba; --line:#274551;
+  --accent:#4cc9d4; --accent-soft:#17414a; --accent-fg:#062229; --gold:#ffc83d;
+  --ok:#5fdc8f; --ok-soft:#173a29; --bad:#ff8a8a; --bad-soft:#40201f; --hero:#071218; --hero-fg:#eafcfb;
+  --sea:#14424f; --sea2:#0f3641; --fog:#050d12; --fog2:#0d2530; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1a21; --card:#14262f; --fg:#e8f6f6; --muted:#97b4ba; --line:#274551;
+  --accent:#4cc9d4; --accent-soft:#17414a; --accent-fg:#062229; --gold:#ffc83d;
+  --ok:#5fdc8f; --ok-soft:#173a29; --bad:#ff8a8a; --bad-soft:#40201f; --hero:#071218; --hero-fg:#eafcfb;
+  --sea:#14424f; --sea2:#0f3641; --fog:#050d12; --fog2:#0d2530; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.hero{background:var(--hero);color:var(--hero-fg);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:22px max(16px,env(safe-area-inset-left,0px)) 52px;position:relative;overflow:hidden}
+.hero .in{max-width:820px;margin:0 auto;position:relative;z-index:1}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,7vw,46px);line-height:1.05;margin:0 0 6px;text-wrap:balance}
+.hero p{margin:0;max-width:58ch;opacity:.9}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.brand img{height:46px;width:auto;background:#fff;border-radius:8px;padding:3px 8px;display:block}
+.brand span{font-family:var(--display);font-weight:600;font-size:15px;line-height:1.2}
+.brand small{display:block;font-family:var(--body);font-weight:700;font-size:12px;opacity:.85}
+.who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.who input,.pin input{font:inherit;font-weight:700;color:var(--fg);background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0;width:min(100%,260px)}
+.tlink{font:inherit;font-size:14px;color:var(--muted);background:none;border:0;text-decoration:underline;cursor:pointer;align-self:center}
+.pin{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.rec table{min-width:100%}
+.rec th,.rec td{padding:6px 10px;font-size:15px;text-align:left;border-top:1px solid var(--line);font-family:var(--body);font-weight:700}
+.rec thead th{border-top:0}
+.hero .wave{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:34px;display:block}
+.hero .wave path{fill:var(--bg)}
+.hud{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:-24px;position:relative;z-index:2}
+.pill{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill .coin{color:var(--gold)}
+.hearts{letter-spacing:2px;color:var(--bad)}
+.hearts .lost{opacity:.25}
+.combo.hot{border-color:var(--gold);color:var(--gold)}
+.hud .sp{flex:1}
+.mute{font:inherit;font-weight:800;border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 14px;cursor:pointer}
+.world{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+.world b{font-family:var(--display);font-size:22px}
+.world span{color:var(--muted);font-weight:700}
+.scene{position:relative;border-radius:16px;overflow:hidden;border:2px solid var(--line);aspect-ratio:5/4;max-width:100%;background:#1f8fa3}
+.scene svg{display:block;width:100%;height:100%}
+.fog{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(4,1fr)}
+.fog i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--display);font-weight:800;font-size:clamp(14px,3.4vw,24px);color:var(--hero-fg);opacity:.9;background:linear-gradient(135deg,var(--fog),var(--fog2));border:1px solid rgba(255,255,255,.08);transition:opacity .9s ease,transform .9s ease}
+.fog i.open{opacity:0;transform:scale(1.15);pointer-events:none}
+.fog i.fresh{outline:3px solid var(--gold);outline-offset:-3px}
+.lane{position:relative;height:64px;border-radius:14px;background:linear-gradient(var(--sea),var(--sea2));border:2px solid var(--line);overflow:hidden}
+.lane::before{content:"";position:absolute;inset:auto 0 0 0;height:24px;background:repeating-radial-gradient(circle at 0 100%,transparent 0 10px,rgba(255,255,255,.35) 10px 12px);background-size:48px 24px;animation:drift 6s linear infinite}
+@keyframes drift{to{background-position:-48px 0}}
+.stop{position:absolute;bottom:5px;width:9px;height:9px;border-radius:50%;background:var(--card);border:2px solid var(--line);transform:translateX(-50%)}
+.stop.done{background:var(--gold);border-color:var(--gold)}
+.ship{position:absolute;bottom:12px;width:40px;transform:translateX(-50%);transition:left 1.1s ease-in-out;animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{50%{margin-bottom:4px}}
+.ship svg{display:block;width:100%;height:auto}
+.trail{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;list-style:none;margin:0;padding:0}
+.node{width:100%;font:inherit;font-family:var(--display);font-weight:800;font-size:17px;line-height:1;background:var(--card);color:var(--fg);border:2px solid var(--line);border-radius:10px;padding:7px 0 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.node small{font-size:10px;color:var(--gold);letter-spacing:0;min-height:12px}
+.node[aria-current="step"]{border-color:var(--accent);background:var(--accent-soft)}
+.node.done{border-color:var(--ok)}
+.node:disabled{opacity:.4;cursor:not-allowed}
+.node:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0;position:relative}
+.tag{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h2{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.1;margin:0;text-wrap:balance}
+.story{margin:0;font-size:18px}
+.mission{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-weight:700;margin:0}
+.scroll{overflow-x:auto}
+table{border-collapse:separate;border-spacing:0;min-width:100%;text-align:center;font-variant-numeric:tabular-nums}
+th,td{padding:10px;white-space:nowrap}
+th{text-align:left;color:var(--muted);font-weight:800;font-size:15px}
+tr.op td{padding-bottom:4px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent);font-weight:800;border-radius:999px;padding:3px 10px;font-size:17px}
+.chip.start{background:transparent;color:var(--muted)}
+td.v{font-family:var(--display);font-weight:600;font-size:28px;border-top:1px solid var(--line)}
+tr:not(.op) th{border-top:1px solid var(--line)}
+tr.last td.v,tr.last th{border-bottom:0}
+td.v.base{background:var(--accent);color:var(--accent-fg)}
+td input,.chip input{width:3.6em;font:inherit;font-weight:800;text-align:center;color:var(--fg);background:var(--bg);border:2px dashed var(--accent);border-radius:10px;padding:4px 2px}
+.chip input{width:2.6em;font-size:17px;padding:1px 2px;background:var(--card)}
+input.ok{border:2px solid var(--ok)!important;background:var(--ok-soft)!important}
+input.bad{border:2px solid var(--bad)!important;background:var(--bad-soft)!important;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button.act{font:inherit;font-weight:800;border-radius:12px;padding:10px 20px;cursor:pointer;border:2px solid var(--accent);background:var(--accent);color:var(--accent-fg)}
+button.act.alt{background:transparent;color:var(--accent)}
+button.act[hidden]{display:none}
+.msg{font-weight:700;min-height:1.5em;margin:0}
+.msg.warn{color:var(--bad)}
+.hint{background:var(--bg);border-left:4px solid var(--gold);border-radius:6px;padding:8px 12px;font-size:16px;margin:0}
+.win{text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.win .big{font-family:var(--display);font-size:32px;font-weight:800;line-height:1.1}
+.win .gold{color:var(--gold);font-size:30px;letter-spacing:4px}
+.win.sink .big{color:var(--bad)}
+.found{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-weight:800;max-width:100%}
+.tally{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.rule{font-size:15px;color:var(--muted);margin:0}
+.start{text-align:center;align-items:center}
+.log{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.log li{background:var(--card);border:2px solid var(--gold);border-radius:999px;padding:2px 12px;font-weight:800;font-size:14px}
+.log li.empty{border-color:var(--line);color:var(--muted);font-weight:700}
+.coin-fx{position:absolute;left:50%;top:40%;width:14px;height:14px;border-radius:50%;background:var(--gold);pointer-events:none;animation:pop 1.1s ease-out forwards}
+@keyframes pop{to{transform:translate(var(--x),var(--y));opacity:0}}
+.shake{animation:shake .4s}
+@media (max-width:520px){.trail{grid-template-columns:repeat(5,1fr)}}
+@media (prefers-reduced-motion:reduce){input.bad,.shake{animation:none}.ship,.lane::before{animation:none}.ship,.fog i{transition:none}.coin-fx{display:none}}
+</style></head><body>
+
+<div class="hero">
+  <div class="in">
+    <div class="brand"><img src="inspire-logo.png" alt="Inspire International Academy logo" width="245" height="104"><span>Hossam Elmoghazy<small>Math Teacher · Inspire International Academy</small></span></div>
+    <h1>Ratio Treasure Quest</h1>
+    <p>A fog hides the Red Sea treasure bay. Solve 20 ratio puzzles with Captain Noura. Every level you clear lifts the fog from one piece of the picture and gives you a find for your treasure log.</p>
+  </div>
+  <svg class="wave" viewBox="0 0 800 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 17 Q50 0 100 17 T200 17 T300 17 T400 17 T500 17 T600 17 T700 17 T800 17 V34 H0Z"/></svg>
+</div>
+
+<div class="wrap">
+  <div class="hud">
+    <span class="pill"><span class="coin">●</span> <span id="score">0</span></span>
+    <span class="pill hearts" id="hearts" aria-label="Lives"></span>
+    <span class="pill" id="timer">0:00</span>
+    <span class="pill combo" id="combo">Combo ×1</span>
+    <span class="sp"></span>
+    <button class="mute" id="rep">Copy my report</button>
+    <button class="mute" id="mute" aria-pressed="false">Sound on</button>
+  </div>
+
+  <div class="world"><b id="wname">World 1: Coral Reef</b><span id="wpct">0 of 20 pieces revealed</span></div>
+  <div class="scene" id="scene">
+    <svg viewBox="0 0 500 400" role="img" aria-label="Treasure bay: Jeddah Tower and a lighthouse on the shore, a palm island, a ship, coral, a cave, a fish and a glowing treasure chest on the sea floor">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc4ec"/><stop offset="1" stop-color="#ffe3b0"/></linearGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2fb3c7"/><stop offset="1" stop-color="#0d4d66"/></linearGradient>
+        <radialGradient id="glow"><stop offset="0" stop-color="#fff3b0" stop-opacity=".95"/><stop offset="1" stop-color="#ffd24d" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="500" height="180" fill="url(#sky)"/>
+      <circle cx="420" cy="55" r="30" fill="#fff0a8"/>
+      <path d="M40 180 L47 30 L52 14 L57 30 L64 180Z" fill="#eef3f6" stroke="#6d8794" stroke-width="2"/>
+      <path d="M47 60 H57 M46 100 H58 M45 140 H59" stroke="#6d8794" stroke-width="2"/>
+      <rect x="110" y="110" width="18" height="70" fill="#fff" stroke="#6d8794" stroke-width="2"/>
+      <rect x="110" y="128" width="18" height="12" fill="#e0453a"/><rect x="110" y="152" width="18" height="12" fill="#e0453a"/>
+      <path d="M106 110 L119 92 L132 110Z" fill="#e0453a"/><circle cx="119" cy="100" r="3" fill="#ffe27a"/>
+      <rect y="180" width="500" height="220" fill="url(#sea)"/>
+      <path d="M0 196 Q25 188 50 196 T100 196 T150 196 T200 196 T250 196 T300 196 T350 196 T400 196 T450 196 T500 196" fill="none" stroke="#bff2f7" stroke-width="2" opacity=".7"/>
+      <ellipse cx="330" cy="188" rx="75" ry="18" fill="#e8c98a"/>
+      <path d="M335 188 Q332 150 342 128" fill="none" stroke="#7a4b24" stroke-width="6" stroke-linecap="round"/>
+      <path d="M342 128 Q320 116 304 128 M342 128 Q350 108 372 112 M342 128 Q366 126 376 142 M342 128 Q318 140 312 150" fill="none" stroke="#2d9a53" stroke-width="7" stroke-linecap="round"/>
+      <g transform="translate(190 168)"><path d="M0 -50 V-8" stroke="#5b3a1e" stroke-width="3"/><path d="M2 -48 L24 -12 H2Z" fill="#fff" stroke="#0b3c4d" stroke-width="1.5"/><path d="M-2 -40 L-22 -12 H-2Z" fill="#ffd36b" stroke="#0b3c4d" stroke-width="1.5"/><path d="M-30 -8 H30 L22 10 H-22Z" fill="#8a4b22" stroke="#0b3c4d" stroke-width="1.5"/></g>
+      <path d="M0 400 V345 Q120 325 250 345 T500 340 V400Z" fill="#d6b877"/>
+      <path d="M20 360 Q16 330 28 320 M28 360 Q30 322 44 312 M44 362 Q50 336 60 330" fill="none" stroke="#ff7aa2" stroke-width="7" stroke-linecap="round"/>
+      <path d="M70 362 Q76 340 70 328 M80 362 Q90 338 100 336" fill="none" stroke="#ffb347" stroke-width="6" stroke-linecap="round"/>
+      <path d="M130 345 Q130 290 190 290 Q250 290 250 345Z" fill="#1a2d3a"/><path d="M148 345 Q148 306 190 306 Q232 306 232 345Z" fill="#06121a"/>
+      <g transform="translate(300 270)"><ellipse rx="22" ry="12" fill="#ffb347"/><path d="M20 0 L36 -10 V10Z" fill="#ffb347"/><circle cx="-10" cy="-3" r="2.5" fill="#06121a"/></g>
+      <g transform="translate(120 250)"><ellipse rx="16" ry="9" fill="#ff7aa2"/><path d="M-14 0 L-28 -8 V8Z" fill="#ff7aa2"/><circle cx="8" cy="-2" r="2" fill="#06121a"/></g>
+      <circle cx="400" cy="340" r="62" fill="url(#glow)"/>
+      <rect x="370" y="322" width="62" height="38" rx="5" fill="#8a4b22" stroke="#4a2810" stroke-width="2"/>
+      <path d="M370 332 Q401 296 432 332Z" fill="#a85f2c" stroke="#4a2810" stroke-width="2"/>
+      <rect x="396" y="326" width="10" height="14" fill="#ffd24d" stroke="#4a2810" stroke-width="1.5"/>
+      <circle cx="384" cy="316" r="5" fill="#fff" stroke="#c9b7d6"/><circle cx="402" cy="312" r="6" fill="#fff" stroke="#c9b7d6"/><circle cx="420" cy="317" r="5" fill="#fff" stroke="#c9b7d6"/>
+    </svg>
+    <div class="fog" id="fog"></div>
+  </div>
+
+  <div class="lane" id="lane" aria-hidden="true">
+    <div class="ship" id="ship"><svg viewBox="0 0 60 56"><path d="M30 2 V34" stroke="#5b3a1e" stroke-width="3"/><path d="M32 4 L52 30 H32Z" fill="#fff" stroke="#0b3c4d" stroke-width="1.5"/><path d="M28 10 L10 30 H28Z" fill="#ffd36b" stroke="#0b3c4d" stroke-width="1.5"/><path d="M6 36 H54 L46 50 H14Z" fill="#8a4b22" stroke="#0b3c4d" stroke-width="1.5"/><path d="M30 2 L38 5 L30 8Z" fill="#e0453a"/></svg></div>
+  </div>
+  <ol class="trail" id="trail"></ol>
+
+  <section class="card start" id="start">
+    <h2>Ready, Captain?</h2>
+    <p class="story">You get 3 hearts at every level. A wrong answer costs a heart. Correct boxes lock in and build a combo for bonus coins. Lose all hearts and the ship takes on water, so try the level again.</p>
+    <p class="rule">× scales forward. ÷ scales backward. Do the same to both parts of the ratio.</p>
+    <div class="who"><label for="pname"><b>Your name:</b></label><input id="pname" type="text" maxlength="40" autocomplete="off" placeholder="Type your full name"></div>
+    <p class="msg warn" id="nmsg"></p>
+    <button class="act" id="go">Set sail</button>
+    <button class="tlink" id="tbtn">Teacher records</button>
+  </section>
+  <section class="card" id="teacher" hidden>
+    <h2>Teacher records</h2>
+    <div class="pin" id="pinrow"><label for="pin"><b>Teacher number:</b></label><input id="pin" type="password" inputmode="numeric" autocomplete="off"><button class="act" id="pinok">Open</button></div>
+    <p class="msg warn" id="pmsg"></p>
+    <div class="scroll rec" id="rec"></div>
+    <button class="act alt" id="tclose">Close</button>
+  </section>
+  <section class="card" id="quest" aria-live="polite" hidden></section>
+
+  <div>
+    <p class="rule" style="margin-bottom:8px">Treasure log</p>
+    <ul class="log" id="log"></ul>
+  </div>
+</div>
+
+<script>
+/* name, direction, first, second, columns (x = multiply, d = divide), blanks (column + a/b/f), story, hint, find */
+var RAW=[
+ ['Snorkel Shore','Forward',2,3,'x2 x3 x4','0a 0b 1b 2a','Every 2 divers share 3 air tanks. Noura is packing for bigger teams.','In column ×2, double both 2 and 3.','Snorkel'],
+ ['Tank Check','Forward',3,2,'x2 x3 x5','0a 1b 2b','3 boats need 2 anchors. Fill in the supply list.','Column ×3: multiply 3 by 3 and 2 by 3.','Brass anchor'],
+ ['Pearl Market','Forward',3,5,'x2 x3 x5','0f 1f 2f','At the Jeddah market 3 pearls cost 5 riyals. The traders forgot the multipliers.','What do you multiply 3 by to get the new first part?','Pearl'],
+ ['Sail Flags','Forward',4,7,'x2 x5 x10','0b 1f 1b 2a','4 sails need 7 ropes. Bigger ships need more of both.','Column ×5 and column ×10 both start from 4 : 7.','Signal flag'],
+ ['Coral Count','Forward',5,6,'x2 x4 x6 x10','0a 1b 2f 3a','5 coral pieces for every 6 fish. Count the whole reef.','Find the multiplier by comparing the first parts: 5 to 30 is ×6.','Pink coral'],
+ ['Cave Down','Backward',12,18,'d2 d3 d6','0a 0b 1f 2b','Inside the sea cave, each plank is a smaller copy of 12 : 18.','Column ÷2: half of 12 and half of 18.','Torch'],
+ ['Rope Bridge','Backward',8,12,'d2 d4','0a 0b 1f 1b','A rope bridge uses 8 ropes for every 12 planks. Shrink it.','Column ÷4: 8 ÷ 4 and 12 ÷ 4.','Rope coil'],
+ ['Shortest Path','Backward',20,30,'d2 d5 d10','0b 1f 2a 2b','The map shows the route as 20 : 30. Noura wants the shortest way to write it.','The biggest number that divides both 20 and 30 is 10.','Folded map'],
+ ['Shell Shelves','Backward',18,24,'d2 d3 d6','0a 1b 2f 2a','18 big shells for every 24 small ones. Make the display smaller.','Check 18 ÷ 6 and 24 ÷ 6. Both are whole numbers.','Conch shell'],
+ ['Tower Lookout','Backward',45,60,'d3 d5 d15','0a 0b 1f 2a','A model of Jeddah Tower uses 45 : 60. The harbour needs smaller models.','Try ÷5 first: 45 ÷ 5 and 60 ÷ 5.','Spyglass'],
+ ['Two Way Reef','Both ways',12,16,'d2 d4 x2 x5','0a 1b 2f 3a','The reef gate opens only when you go backward and forward from the same start, 12 : 16.','Every column starts from 12 : 16, not from the column before it.','Reef key'],
+ ['Harbour Market','Both ways',6,10,'d2 x3 x5','0b 1f 1a 2b','Sellers shrink or grow their stalls from the same 6 : 10 pattern.','Column ÷2 gives 3 : 5.','Silk sash'],
+ ['Lighthouse Stairs','Both ways',9,12,'d3 x2 x5','0a 1f 2a 2b','The lighthouse stairs repeat the pattern 9 steps to 12 lamps.','9 ÷ 3 = 3, so the second part is 12 ÷ 3.','Lantern'],
+ ['Fishing Nets','Both ways',14,21,'d7 x2 x3','0a 0b 1f 2b','14 nets for every 21 fishers. Scale the fleet down and up.','14 and 21 both divide by 7.','Fishing net'],
+ ['Camel Caravan','Both ways',16,24,'d8 d4 x3 x5','0a 1f 2b 3a','16 camels carry 24 sacks. The caravan splits and joins again.','From 16 : 24, ÷8 gives 2 : 3.','Compass'],
+ ['Mast and Map','Hard',7,9,'x3 x7 x11','0f 1b 2f 2a','The new mast needs a big table of 7 : 9 copies.','7 times what equals 77? That is column 3.','Gold coin'],
+ ['Smugglers Gate','Hard',24,36,'d2 d3 d12 x2','0a 1f 2b 3a','The gate numbers are all copies of 24 : 36.','24 ÷ 12 = 2, so the simplest form is 2 : 3.','Iron key'],
+ ['Storm Reef','Hard',30,45,'d3 d5 d15 x4','0b 1a 2f 3b','Waves hide half the numbers on the 30 : 45 chart.','30 ÷ 15 = 2 gives the simplest ratio 2 : 3.','Storm bell'],
+ ['Cursed Cavern','Hard',36,48,'d2 d6 d12 x5','0a 1b 2f 2a 3b','Five cursed doors, each a copy of 36 : 48.','36 ÷ 12 = 3 and 48 ÷ 12 = 4.','Ruby'],
+ ['Pearl Vault','Boss',15,20,'d5 x2 x6 x10','0a 0b 1f 2a 3b','The vault is guarded by one last table. Use every skill you have learned.','Start with ÷5 to find the simplest ratio.','The Pearl Chest']
+];
+var LEVELS=RAW.map(function(r){
+  return {name:r[0],dir:r[1],a:r[2],b:r[3],
+    cols:r[4].split(' ').map(function(c){return [c[0]==='x'?'×':'÷',+c.slice(1)]}),
+    blank:r[5].split(' ').map(function(b){return [+b[0],b[1]]}),
+    story:r[6],hint:r[7],item:r[8]};
+});
+var WORLDS=[['Coral Reef',0],['Sea Cave',5],['Tides and Towers',10],['Pearl Vault',15]];
+var N=LEVELS.length,MAXH=3;
+var S={cur:0,stars:[],score:0,hearts:3,combo:1,streak:0,hint:false,state:'idle',t0:0,tick:null,muted:false};
+var KEY='ratioQuest3',started=false;
+try{var sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stars){S.stars=sv.stars;S.score=sv.score||0;S.cur=Math.min(sv.cur||0,N-1);started=S.stars.length>0}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({stars:S.stars,cur:S.cur,score:S.score}))}catch(e){}}
+function $(id){return document.getElementById(id)}
+
+/* sound */
+var AC=null;
+function tone(f,d,type,when,vol){
+  if(S.muted||!AC)return;
+  var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(when||0);
+  o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(vol||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);
+}
+function sfx(k){
+  if(k==='ok'){tone(660,.12,'triangle');tone(880,.16,'triangle',.08)}
+  else if(k==='bad'){tone(170,.3,'sawtooth',0,.09)}
+  else if(k==='win'){[523,659,784,1046].forEach(function(f,i){tone(f,.22,'triangle',i*.11)})}
+  else if(k==='lose'){[392,330,262,196].forEach(function(f,i){tone(f,.28,'sine',i*.16)})}
+  else if(k==='click'){tone(500,.06,'square',0,.05)}
+}
+
+function val(L,c,row){var o=L.cols[c],f=o[1];
+  if(row==='f')return f;
+  var base=row==='a'?L.a:L.b;return o[0]==='×'?base*f:base/f}
+function starStr(n){return n?'★'.repeat(n)+'☆'.repeat(3-n):''}
+function cleared(i){return S.stars[i]>0}
+function unlocked(i){return i===0||cleared(i-1)}
+function countCleared(){var n=0;for(var i=0;i<N;i++)if(cleared(i))n++;return n}
+function fmt(s){return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+function secs(){return Math.floor((Date.now()-S.t0)/1000)}
+function startTimer(){S.t0=Date.now();clearInterval(S.tick);$('timer').textContent='0:00';S.tick=setInterval(function(){$('timer').textContent=fmt(secs())},500)}
+function stopTimer(){clearInterval(S.tick)}
+
+function hud(){
+  $('score').textContent=S.score;
+  var h='';for(var i=0;i<MAXH;i++)h+='<span class="'+(i<S.hearts?'':'lost')+'">♥</span>';
+  $('hearts').innerHTML=h;$('hearts').setAttribute('aria-label',S.hearts+' lives left');
+  var c=$('combo');c.textContent='Combo ×'+S.combo;c.classList.toggle('hot',S.combo>1);
+}
+function worldOf(i){var w=0;WORLDS.forEach(function(x,k){if(i>=x[1])w=k});return w}
+function drawMap(fresh){
+  var h='',i;
+  $('fog').innerHTML=LEVELS.map(function(L,k){return '<i class="'+(cleared(k)?'open':'')+(k===fresh?' fresh':'')+'">'+(k+1)+'</i>'}).join('');
+  var lane=$('lane');lane.querySelectorAll('.stop').forEach(function(e){e.remove()});
+  for(i=0;i<N;i++)h+='<span class="stop'+(cleared(i)?' done':'')+'" style="left:'+((i+.5)/N*100)+'%"></span>';
+  lane.insertAdjacentHTML('afterbegin',h);
+  $('ship').style.left=((S.cur+.5)/N*100)+'%';
+  var t='';
+  LEVELS.forEach(function(L,k){
+    t+='<li><button class="node'+(cleared(k)?' done':'')+'" data-i="'+k+'"'+(k===S.cur?' aria-current="step"':'')+(unlocked(k)?'':' disabled')+' aria-label="Level '+(k+1)+': '+L.name+'">'+(k+1)+'<small aria-hidden="true">'+(cleared(k)?'★'.repeat(S.stars[k]):'')+'</small></button></li>';
+  });
+  $('trail').innerHTML=t;
+  var w=worldOf(S.cur);$('wname').textContent='World '+(w+1)+': '+WORLDS[w][0];
+  $('wpct').textContent=countCleared()+' of '+N+' pieces revealed';
+  var lg='';LEVELS.forEach(function(L,k){if(cleared(k))lg+='<li>'+L.item+'</li>'});
+  $('log').innerHTML=lg||'<li class="empty">Nothing found yet. Clear level 1 to find your first item.</li>';
+}
+
+function cell(L,c,row){
+  var blank=L.blank.some(function(b){return b[0]===c&&b[1]===row});
+  if(!blank)return val(L,c,row);
+  return '<input type="text" inputmode="numeric" autocomplete="off" id="c'+c+row+'" data-c="'+c+'" data-r="'+row+'" aria-label="Missing number in column '+(c+2)+', '+(row==='f'?'multiplier':row==='a'?'first part':'second part')+'">';
+}
+function drawQuest(){
+  var L=LEVELS[S.cur];
+  S.hearts=MAXH;S.combo=1;S.streak=0;S.hint=false;S.state='play';
+  var h='<span class="tag">Level '+(S.cur+1)+' of '+N+' · '+L.dir+'</span><h2>'+L.name+'</h2><p class="story">'+L.story+'</p><p class="mission">Fill every empty box. The finder\'s prize: <b>'+(cleared(S.cur)?L.item:'a hidden find and one piece of the picture')+'</b>.</p>';
+  h+='<div class="scroll"><table><tr class="op"><th></th><td><span class="chip start">start</span></td>';
+  L.cols.forEach(function(o,c){h+='<td><span class="chip">'+o[0]+' '+cell(L,c,'f')+'</span></td>'});
+  h+='</tr><tr><th>First part</th><td class="v base">'+L.a+'</td>';
+  L.cols.forEach(function(o,c){h+='<td class="v">'+cell(L,c,'a')+'</td>'});
+  h+='</tr><tr class="last"><th>Second part</th><td class="v base">'+L.b+'</td>';
+  L.cols.forEach(function(o,c){h+='<td class="v">'+cell(L,c,'b')+'</td>'});
+  h+='</tr></table></div>';
+  h+='<div class="row"><button class="act" id="check">Check answers</button><button class="act alt" id="hintb">Hint (−25 coins)</button></div>';
+  h+='<div id="hintbox"></div><p class="msg" id="msg"></p><div id="win"></div>';
+  var q=$('quest');q.innerHTML=h;q.hidden=false;
+  $('check').onclick=check;
+  $('hintb').onclick=function(){if(S.state!=='play')return;S.hint=true;S.score=Math.max(0,S.score-25);hud();sfx('click');$('hintbox').innerHTML='<p class="hint"><b>Hint:</b> '+L.hint+'</p>';this.hidden=true};
+  q.querySelectorAll('input').forEach(function(inp){
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter')check()});
+    inp.addEventListener('input',function(){inp.classList.remove('bad')});
+  });
+  var f=q.querySelector('input');if(f&&started)f.focus({preventScroll:true});
+  hud();drawMap();startTimer();
+}
+function burst(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var q=$('quest');
+  for(var i=0;i<22;i++){
+    var s=document.createElement('span');s.className='coin-fx';
+    var a=Math.random()*6.28,r=80+Math.random()*140;
+    s.style.setProperty('--x',Math.cos(a)*r+'px');s.style.setProperty('--y',(Math.sin(a)*r-40)+'px');
+    q.appendChild(s);setTimeout(function(el){el.remove()},1200,s);
+  }
+}
+function check(){
+  if(S.state!=='play')return;
+  var L=LEVELS[S.cur],ins=[].slice.call($('quest').querySelectorAll('input:not(.ok)')),empty=0,wrong=0,good=0;
+  ins.forEach(function(inp){if(inp.value.trim()==='')empty++});
+  var m=$('msg');m.className='msg';
+  if(empty){m.textContent='Fill every empty box, then check again.';m.className='msg warn';return}
+  ins.forEach(function(inp){
+    var exp=val(L,+inp.dataset.c,inp.dataset.r),t=inp.value.trim();
+    if(/^\d+$/.test(t)&&parseInt(t,10)===exp){
+      inp.classList.remove('bad');inp.classList.add('ok');inp.readOnly=true;good++;
+      S.score+=10*S.combo;S.streak++;if(S.streak%2===0&&S.combo<5)S.combo++;
+    }else{inp.classList.add('bad');wrong++}
+  });
+  if(wrong){
+    S.hearts--;S.combo=1;S.streak=0;sfx('bad');
+    var q=$('quest');q.classList.remove('shake');void q.offsetWidth;q.classList.add('shake');
+    hud();
+    if(S.hearts<=0){fail();return}
+    m.textContent=(good?good+' locked in. ':'')+wrong+(wrong===1?' box is':' boxes are')+' wrong. You lost a heart, '+S.hearts+' left.';m.className='msg warn';
+    return;
+  }
+  sfx('ok');hud();clearLevel();
+}
+function clearLevel(){
+  S.state='won';stopTimer();
+  var t=secs(),stars=Math.max(1,S.hearts-(S.hint?1:0)),L=LEVELS[S.cur];
+  var heartBonus=S.hearts*50,timeBonus=Math.max(0,60-t)*2;
+  S.score+=heartBonus+timeBonus;
+  if(!S.stars[S.cur]||stars>S.stars[S.cur])S.stars[S.cur]=stars;
+  var last=S.cur===N-1,total=S.stars.reduce(function(a,b){return a+(b||0)},0);
+  hud();burst();setTimeout(function(){sfx('win')},250);
+  var w='<div class="win"><div class="gold">'+starStr(stars)+'</div><div class="big">'+(last?'The fog lifts. Treasure found!':'Level cleared!')+'</div>'
+   +'<div class="found">Fog lifted from piece '+(S.cur+1)+'. You found: '+L.item+'</div>'
+   +'<div class="tally"><span class="pill">Hearts +'+heartBonus+'</span><span class="pill">Speed +'+timeBonus+'</span><span class="pill">Time '+fmt(t)+'</span></div>';
+  if(last)w+='<p>The whole bay is clear and the pearl chest is yours. Final score: <b>'+S.score+'</b> coins and '+total+' of '+N*3+' stars.</p><p class="rule">Well done, '+esc(ME)+'! Inspire International Academy · Hossam Elmoghazy</p><button class="act" id="again">Sail again</button></div>';
+  else w+='<p>Next level: '+LEVELS[S.cur+1].name+'.</p><button class="act" id="next">Sail on</button></div>';
+  $('win').innerHTML=w;
+  $('check').hidden=true;$('hintb').hidden=true;$('msg').textContent='';
+  var nb=$('next'),ag=$('again');
+  if(nb)nb.onclick=function(){S.cur++;save();drawQuest();$('scene').scrollIntoView({block:'start'})};
+  if(ag)ag.onclick=function(){S.cur=0;S.stars=[];S.score=0;save();drawQuest();window.scrollTo(0,0)};
+  save();record();drawMap(S.cur);
+  $('scene').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function fail(){
+  S.state='lost';stopTimer();sfx('lose');
+  $('quest').querySelectorAll('input:not(.ok)').forEach(function(i){i.readOnly=true});
+  $('check').hidden=true;$('hintb').hidden=true;$('msg').textContent='';
+  $('win').innerHTML='<div class="win sink"><div class="big">The ship is taking on water!</div><p>You ran out of hearts. Your coins are safe. Patch the hull and try this level again.</p><button class="act" id="retry">Try again</button></div>';
+  $('retry').onclick=drawQuest;
+}
+
+$('trail').addEventListener('click',function(e){
+  var b=e.target.closest('.node');if(!b||b.disabled)return;
+  S.cur=+b.dataset.i;sfx('click');drawQuest();
+});
+$('mute').onclick=function(){S.muted=!S.muted;this.textContent=S.muted?'Sound off':'Sound on';this.setAttribute('aria-pressed',S.muted)};
+/* records: each girl's progress is saved to the shared db; only the teacher panel reads it */
+var DB=null,ME='';
+try{ME=localStorage.getItem('ratioQuestName')||''}catch(e){}
+$('pname').value=ME;
+if(window.claude&&claude.use)claude.use('db').then(function(d){DB=d}).catch(function(){});
+function slug(n){return n.toLowerCase().replace(/[^a-z0-9؀-ۿ]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'girl'}
+function record(){
+  if(!DB||!ME)return;
+  var n=S.stars.reduce(function(a,b){return a+(b||0)},0);
+  try{DB.collection('players').doc(slug(ME)).set({name:ME,score:S.score,cleared:countCleared(),stars:n,at:Date.now()}).catch(function(){})}catch(e){}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function loadRecords(){
+  var r=$('rec'),m=$('pmsg');m.textContent='';
+  if(!DB){m.textContent='Records are not available in this view. Open the page while signed in to claude.ai.';return}
+  DB.collection('players').get().then(function(snap){
+    var rows=[];snap.forEach(function(d){rows.push(d.data())});
+    rows.sort(function(a,b){return (b.score||0)-(a.score||0)});
+    if(!rows.length){r.innerHTML='<p class="rule">No girls have played yet.</p>';return}
+    var h='<table><thead><tr><th>#</th><th>Name</th><th>Levels</th><th>Stars</th><th>Coins</th><th>Last played</th></tr></thead><tbody>';
+    rows.forEach(function(x,i){h+='<tr><td>'+(i+1)+'</td><td>'+esc(x.name)+'</td><td>'+(x.cleared||0)+' / '+N+'</td><td>'+(x.stars||0)+'</td><td>'+(x.score||0)+'</td><td>'+(x.at?new Date(x.at).toLocaleString():'')+'</td></tr>'});
+    r.innerHTML=h+'</tbody></table>';
+  }).catch(function(){m.textContent='Only the teacher account can read the records. Sign in as the owner of this page.'});
+}
+$('tbtn').onclick=function(){$('start').hidden=true;$('quest').hidden=true;$('teacher').hidden=false;$('rec').innerHTML='';$('pinrow').hidden=false;$('pin').value='';$('pmsg').textContent=''};
+$('tclose').onclick=function(){$('teacher').hidden=true;$('start').hidden=!!(S.state!=='idle');$('quest').hidden=(S.state==='idle')};
+$('pinok').onclick=function(){
+  if($('pin').value.trim()==='987654321'){$('pinrow').hidden=true;loadRecords()}else{$('pmsg').textContent='That number is not right.'}
+};
+$('pin').addEventListener('keydown',function(e){if(e.key==='Enter')$('pinok').click()});
+$('go').onclick=function(){
+  var nm=$('pname').value.trim();
+  if(nm.length<2){$('nmsg').textContent='Type your name first, Captain.';$('pname').focus();return}
+  ME=nm;try{localStorage.setItem('ratioQuestName',ME)}catch(e){}
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  started=true;$('start').hidden=true;sfx('click');drawQuest();
+};
+if(started)$('go').textContent='Continue voyage';
+hud();drawMap();
+</script>
+<script>
+var LK='ratioQuestLog';
+function lrows(){try{return JSON.parse(localStorage.getItem(LK)||'[]')}catch(e){return []}}
+function record(){
+  if(!ME)return;
+  var n=S.stars.reduce(function(a,b){return a+(b||0)},0),rows=lrows(),id=slug(ME),row={id:id,name:ME,score:S.score,cleared:countCleared(),stars:n,at:Date.now()},f=false;
+  rows=rows.map(function(r){if(r.id===id){f=true;return row}return r});if(!f)rows.push(row);
+  try{localStorage.setItem(LK,JSON.stringify(rows))}catch(e){}
+}
+function loadRecords(){
+  var r=$('rec'),m=$('pmsg');m.textContent='';
+  var rows=lrows().sort(function(a,b){return (b.score||0)-(a.score||0)});
+  if(!rows.length){r.innerHTML='<p class="rule">No girls have played on this device yet.</p>';return}
+  var h='<table><thead><tr><th>#</th><th>Name</th><th>Levels</th><th>Stars</th><th>Coins</th><th>Last played</th></tr></thead><tbody>';
+  rows.forEach(function(x,i){h+='<tr><td>'+(i+1)+'</td><td>'+esc(x.name)+'</td><td>'+(x.cleared||0)+' / '+N+'</td><td>'+(x.stars||0)+'</td><td>'+(x.score||0)+'</td><td>'+(x.at?new Date(x.at).toLocaleString():'')+'</td></tr>'});
+  h+='</tbody></table><p><button class="act alt" id="csv">Copy CSV</button></p>';
+  r.innerHTML=h;
+  $('csv').onclick=function(){var t='Name,Levels,Stars,Coins
+'+rows.map(function(x){return '"'+String(x.name).replace(/"/g,'""')+'",'+(x.cleared||0)+','+(x.stars||0)+','+(x.score||0)}).join('
+');
+    try{navigator.clipboard.writeText(t).then(function(){$('csv').textContent='Copied'})}catch(e){}};
+}
+$('rep').onclick=function(){
+  var n=S.stars.reduce(function(a,b){return a+(b||0)},0),t='Ratio Treasure Quest | '+(ME||'(no name)')+' | levels '+countCleared()+'/'+N+' | stars '+n+' | coins '+S.score;
+  var b=this;try{navigator.clipboard.writeText(t).then(function(){b.textContent='Copied, send it to your teacher'},function(){b.textContent=t})}catch(e){b.textContent=t}
+};
+</script>
+</body></html>
